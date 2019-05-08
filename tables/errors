@@ -1,0 +1,15 @@
+*** duplicate label definition
+*** this statement can’t have a label
+*** this statement can’t have an operand
+*** wrong g operation prefix
+*** unrecognized operation code
+*** undefined symbol in operand
+*** not a hexadecimal string
+*** can’t be format 4 instruction
+*** illegal address for a register
+*** missing END statement
+**** missing START statement
+**** not a data type
+**** end label must be the same as start label
+*** missing operand field
+**** illegal label
