@@ -39,6 +39,7 @@ class Assembler {
     void assemble() {
         try {
             firstPass();
+            secondPass();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -62,10 +63,10 @@ class Assembler {
                 continue;
             }
 
-            if (statement.getOpCode().getMnemonic().equalsIgnoreCase("START") && !started) {
+            if (statement.getMnemonic().getMnemonic().equalsIgnoreCase("START") && !started) {
                 // Save #[OPERAND] as starting address, and #[LABEL] as program name.
                 // parseInt converts a string of base radix (16) to an integer
-                progStartAddr = Integer.parseInt(statement.getFirstOperand(), 16);
+                progStartAddr = Integer.parseInt(statement.getFirstOperand().getLine(), 16);
                 progName = statement.getLabel();
 
                 // Initialize LOCCTR to starting address.
@@ -86,15 +87,15 @@ class Assembler {
 
             int growthSize = 0;
 
-            if (statement.getOpCode().getMnemonic().equalsIgnoreCase("END") && !ended) {
+            if (statement.getMnemonic().getMnemonic().equalsIgnoreCase("END") && !ended) {
                 statement.setAddress(locctr);
                 if (statement.hasFirstOperand()) {
-                    if (!statement.getFirstOperand().equalsIgnoreCase(progName)) {
+                    if (!statement.getFirstOperand().getLine().equalsIgnoreCase(progName)) {
                         statement.setError(ERRORS.get(12));
                     }
                 }
                 statements.add(statement);
-                progLength = locctr - progStartAddr;
+                progLength = locctr - progStartAddr - 1;
                 ended = true;
                 break;
             }
@@ -109,26 +110,26 @@ class Assembler {
                 }
             }
 
-            if (statement.getOpCode().isDirective()) {
+            if (statement.getMnemonic().isDirective()) {
 
-                switch (statement.getOpCode().getMnemonic()) {
+                switch (statement.getMnemonic().getMnemonic()) {
                     case "WORD":
                         growthSize = 3;
                         break;
 
                     case "RESW":
-                        growthSize = Integer.parseInt(statement.getFirstOperand()) * 3;
+                        growthSize = Integer.parseInt(statement.getFirstOperand().getLine()) * 3;
                         break;
 
                     case "RESB":
                     case "ORG":
-                        growthSize = Integer.parseInt(statement.getFirstOperand());
+                        growthSize = Integer.parseInt(statement.getFirstOperand().getLine());
                         break;
 
                     case "BYTE":
                         // Find length of constant in bytes.
                         // Add length to LOCCTR.
-                        String[] operand = statement.getFirstOperand().split("'");
+                        String[] operand = statement.getFirstOperand().getLine().split("'");
                         String dataType = operand[0];
                         int length = operand[1].length();
 
@@ -164,7 +165,7 @@ class Assembler {
                 continue;
             }
 
-            growthSize = statement.getOpCode().getSize();
+            growthSize = statement.getMnemonic().getSize();
             statement.setAddress(locctr);
             statements.add(statement);
 
@@ -173,104 +174,58 @@ class Assembler {
         }
 
         // UNDEFINED label error handler
+//        for (Statement statement : statements) {
+//            if (!statement.isComment() && statement.getMnemonic() != null) {
+//                if (!statement.getMnemonic().isRegisterType() && !statement.getMnemonic().isDirective() && statement.hasFirstOperand()) {
+//                    if (!statement.getFirstOperand().getLine().startsWith("0") && !statement.getFirstOperand().isImmediate()
+//                    && !statement.getFirstOperand().isIndirect()) {
+//                        if (!SYMTABLE.containsKey(statement.getFirstOperand().getLine())) {
+//                            statement.setError(ERRORS.get(5));
+//                        }
+//                    }
+//                }
+//            }
+//        }
+
+
+
         for (Statement statement : statements) {
-            if (!statement.isComment() && statement.getOpCode() != null) {
-                if (!statement.getOpCode().isRegisterType() && !statement.getOpCode().isDirective() && statement.hasFirstOperand()) {
-                    if (!statement.getFirstOperand().startsWith("0") && !statement.getFirstOperand().startsWith("#")
-                    && !statement.getFirstOperand().startsWith("*") && !statement.getFirstOperand().startsWith("$") &&
-                            !statement.getFirstOperand().startsWith("@")) {
-                        if (!SYMTABLE.containsKey(statement.getFirstOperand())) {
+            if (!statement.isComment() && statement.getMnemonic() != null) {
+                if (!statement.getMnemonic().isRegisterType() && !statement.getMnemonic().isDirective() &&
+                        statement.hasFirstOperand()) {
+                    if (statement.getFirstOperand().isIndirect() || statement.getFirstOperand().isImmediate()) {
+                        boolean isLabel = false;
+                        if (SYMTABLE.containsKey(statement.getFirstOperand().getFilteredLine())) {
+                            isLabel = true;
+                        }
+                        if (!isLabel && !isHex(statement.getFirstOperand().getFilteredLine())) {
                             statement.setError(ERRORS.get(5));
                         }
                     }
-                }
-            }
-        }
 
-        // illegal address for a register handler
-        for (Statement statement : statements) {
-            if (!statement.isComment() && statement.getOpCode() != null) {
-                if (statement.getOpCode().isRegisterType() && !statement.getOpCode().isDirective() &&
-                        statement.hasFirstOperand() && statement.hasSecondOperand()) {
-                    if (!statement.isRegister(statement.getFirstOperand()) || !statement.isRegister(statement.getSecondOperand())) {
-                        statement.setError(ERRORS.get(8));
-                    }
-                }
-                if (statement.getOpCode().isRegisterType() && !statement.getOpCode().isDirective() &&
-                        statement.hasFirstOperand()) {
-                    if (!statement.isRegister(statement.getFirstOperand())) {
-                        statement.setError(ERRORS.get(8));
-                    }
-                }
-            }
-        }
-
-        for (Statement statement : statements) {
-            if (!statement.isComment() && statement.getOpCode() != null) {
-                if (!statement.getOpCode().isRegisterType() && !statement.getOpCode().isDirective() &&
-                        statement.hasFirstOperand()) {
-                    if (statement.getFirstOperand().startsWith("#0")) {
-                        String[] spliter = statement.getFirstOperand().split("#");
-                        if (!isHex(spliter[1])) {
-                            statement.setError(ERRORS.get(6));
+                    if (statement.getFirstOperand().isSimple()) {
+                        if (!SYMTABLE.containsKey(statement.getFirstOperand().getLine())) {
+                            statement.setError(ERRORS.get(5));
                         }
                     }
+
                     if (statement.hasSecondOperand()) {
-                        if (statement.getSecondOperand().startsWith("#0")) {
-                            String[] spliter = statement.getFirstOperand().split("#");
-                            if (!isHex(spliter[1])) {
-                                statement.setError(ERRORS.get(6));
+                        if (statement.getSecondOperand().isIndirect() || statement.getSecondOperand().isImmediate()) {
+                            boolean isLabel = false;
+                            if (SYMTABLE.containsKey(statement.getSecondOperand().getFilteredLine())) {
+                                isLabel = true;
                             }
-                        }
-                    }
-                }
-            }
-        }
-
-        for (Statement statement : statements) {
-            if (!statement.isComment() && statement.getOpCode() != null) {
-                if (!statement.getOpCode().isRegisterType() && !statement.getOpCode().isDirective() &&
-                        statement.hasFirstOperand()) {
-                    if (statement.getFirstOperand().startsWith("#") && !statement.getFirstOperand().startsWith("#0")) {
-                        String[] spliter = statement.getFirstOperand().split("#");
-                        if (!SYMTABLE.containsKey(spliter[1])) {
-                            statement.setError(ERRORS.get(5));
-                        }
-                    }
-                    if (statement.hasSecondOperand()) {
-                        if (statement.getSecondOperand().startsWith("#")&& statement.getFirstOperand().startsWith("#0")) {
-                            String[] spliter = statement.getFirstOperand().split("#");
-                            if (!SYMTABLE.containsKey(spliter[1])) {
+                            if (!isLabel && !isHex(statement.getSecondOperand().getFilteredLine())) {
                                 statement.setError(ERRORS.get(5));
                             }
                         }
+
                     }
                 }
             }
         }
 
 
-        for (Statement statement : statements) {
-            if (!statement.isComment() && statement.getOpCode() != null) {
-                if (!statement.getOpCode().isRegisterType() && !statement.getOpCode().isDirective() &&
-                        statement.hasFirstOperand()) {
-                    if (statement.getFirstOperand().startsWith("@")) {
-                        String[] splintedOperand = statement.getFirstOperand().split("@");
-                        if (!SYMTABLE.containsKey(splintedOperand[1])) {
-                            statement.setError(ERRORS.get(5));
-                        }
-                    }
-                    if (statement.hasSecondOperand()) {
-                        if (statement.getSecondOperand().startsWith("@")) {
-                            String[] splintedOperand = statement.getSecondOperand().split("@");
-                            if (!SYMTABLE.containsKey(splintedOperand[1])) {
-                                statement.setError(ERRORS.get(5));
-                            }
-                        }
-                    }
-                }
-            }
-        }
 
         // printer
         for (Statement statement : statements) {
@@ -278,7 +233,7 @@ class Assembler {
                 list.write("\t" + statement.getError().getError() + "\n");
             }
             if (!statement.isComment()) {
-                list.write(String.format("%06x\t%s\n", statement.getAddress(), statement.getLine()));
+                list.write(String.format("%06X\t%s\n", statement.getAddress(), statement.getLine()));
             } else {
                 list.write(String.format("%s\n", statement.getLine()));
             }
@@ -294,7 +249,7 @@ class Assembler {
         list.write("\t\t   -----------------------\n");
 
         for (String s : SYMTABLE.keySet()) {
-            list.write(String.format("\t\t\t%s\t" + (s.length() < 4 ? "\t" : "") + "\t\t%06x\n", s, SYMTABLE.get(s)));
+            list.write(String.format("\t\t\t%s\t" + (s.length() < 4 ? "\t" : "") + "\t\t%06X\n", s, SYMTABLE.get(s)));
         }
 
         list.close();
@@ -304,14 +259,35 @@ class Assembler {
 
         BufferedWriter object = new BufferedWriter(new FileWriter(objectFile));
 
+        // if there is errors in statements skip pass 2
         for (Statement statement : statements) {
             if (statement.getError() != null) {
-                object.write("\t\t***Error in assembly cannot generate object file***");
+                object.write("\t\t\n\n\n *** Error in assembly cannot generate object file ***\n\n\n");
+                object.close();
                 return;
             }
         }
 
+        String headerRecord = "H";
+        headerRecord += appendSpace(progName) + "^";
+        headerRecord += String.format("%06X^", progStartAddr);
+        headerRecord += String.format("%06X\n", progLength);
 
+        object.write(headerRecord);
+
+        // Remove comments
+        statements.removeIf(Statement::isComment);
+
+
+        object.close();
+    }
+
+    private static String appendSpace(String s) {
+        StringBuilder progName = new StringBuilder(s);
+        for (int i = 0; i < (6 - s.length()); i++) {
+            progName.append(" ");
+        }
+        return progName.toString();
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")

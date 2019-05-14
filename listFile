@@ -1,30 +1,10 @@
 .234567890123456789
-001000	SEARch     START   1000
-001000	   LDA     #0
+001000	SEARH    START   1000
+001000	        LDA     #0
 001003	         LDX     #0
-001006	LOOP     LDA     #STR
+001006	LOOP     LDA     #1234
 001009	         ADDR    X,A
-00100b	         STA     TEMP
-00100e	         LDA     #0
-001011	           LDCH    @TEMP
-001014	         COMP    CHAR
-001017	         JEQ     FOUND
-	*** undefined symbol in operand
-00101a	         TIX     LE
-00101d	         JEQ     NOTF
-001020	          J       LOOP
-001023	FOUND    LDA     TEMP
-.         J       DONE
-001026	NOTF     LDA     XX
-.DONE     J       *
-001029	TEMP     RESW    1
-00102c	STR      BYTE    C'FFREWQRFG'
-	*** not a hexadecimal string
-001035	STR      BYTE    X'FFREWQRFG'
-00103a	XX       RESW    1
-00103d	LEN      WORD    9
-001040	CHAR     WORD    65
-001043	         END     SEARCH
+00100B	         END     SEARH
 
 
 -----------------------------------------------
@@ -33,12 +13,5 @@
 
 			Name			Value
 		   -----------------------
-			STR				00102c
-			XX				00103a
-			TEMP			001029
-			LEN				00103d
-			SEARch			001000
+			SEARH			001000
 			LOOP			001006
-			NOTF			001026
-			CHAR			001040
-			FOUND			001023

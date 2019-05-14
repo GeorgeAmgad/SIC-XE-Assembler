@@ -1,25 +1,7 @@
 .234567890123456789
-SEARch     START   1000
-   LDA     #0
+SEARH    START   1000
+        LDA     #0
          LDX     #0
-LOOP     LDA     #STR
+LOOP     LDA     #1234
          ADDR    X,A
-         STA     TEMP
-         LDA     #0
-           LDCH    @TEMP
-         COMP    CHAR
-         JEQ     FOUND
-         TIX     LE
-         JEQ     NOTF
-          J       LOOP
-FOUND    LDA     TEMP
-.         J       DONE
-NOTF     LDA     XX
-.DONE     J       *
-TEMP     RESW    1
-STR      BYTE    C'FFREWQRFG'
-STR      BYTE    X'FFREWQRFG'
-XX       RESW    1
-LEN      WORD    9
-CHAR     WORD    65
-         END     SEARCH
+         END     SEARH

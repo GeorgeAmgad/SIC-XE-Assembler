@@ -1,27 +1,27 @@
-ADD     m       3 / 4   18
-ADDR    r1,r2   2       90
-COMP    m       3 / 4   28
-COMPR   r1,r2   2       A0
-J       m       3 / 4   3C
-JEQ     m       3 / 4   30
-JGT     m       3 / 4   34
-JLT     m       3 / 4   38
-LDA     m       3 / 4   00
-LDB     m       3 / 4   68
-LDCH    m       3 / 4   50
-LDL     m       3 / 4   08
-LDS     m       3 / 4   6C
-LDT     m       3 / 4   74
-LDX     m       3 / 4   04
-RMO     r1,r2   2       AC
-STA     m       3 / 4   0C
-STB     m       3 / 4   78
-STCH    m       3 / 4   54
-STL     m       3 / 4   14
-STS     m       3 / 4   7C
-STT     m       3 / 4   84
-STX     m       3 / 4   10
-SUB     m       3 / 4   1C
-SUBR    r1,r2   2       94
-TIX     m       3 / 4   2C
-TIXR    r1      2       B8
+ADD     m       3/4   18
+ADDR    r1,r2   2     90
+COMP    m       3/4   28
+COMPR   r1,r2   2     A0
+J       m       3/4   3C
+JEQ     m       3/4   30
+JGT     m       3/4   34
+JLT     m       3/4   38
+LDA     m       3/4   00
+LDB     m       3/4   68
+LDCH    m       3/4   50
+LDL     m       3/4   08
+LDS     m       3/4   6C
+LDT     m       3/4   74
+LDX     m       3/4   04
+RMO     r1,r2   2     AC
+STA     m       3/4   0C
+STB     m       3/4   78
+STCH    m       3/4   54
+STL     m       3/4   14
+STS     m       3/4   7C
+STT     m       3/4   84
+STX     m       3/4   10
+SUB     m       3/4   1C
+SUBR    r1,r2   2     94
+TIX     m       3/4   2C
+TIXR    r1      2     B8

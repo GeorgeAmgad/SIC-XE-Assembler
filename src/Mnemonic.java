@@ -1,4 +1,4 @@
-public class OpCode {
+public class Mnemonic {
 
     private String mnemonic;
     private boolean registerType;
@@ -8,7 +8,7 @@ public class OpCode {
     private int size;
     private String opcode;
 
-    public OpCode(String mnemonic, boolean registerType, int size, String opcode, boolean twoOperands) {
+    public Mnemonic(String mnemonic, boolean registerType, int size, String opcode, boolean twoOperands) {
         this.mnemonic = mnemonic;
         this.registerType = registerType;
         this.size = size;
@@ -16,7 +16,7 @@ public class OpCode {
         this.twoOperands = twoOperands;
     }
 
-    public OpCode(String directive) {
+    public Mnemonic(String directive) {
         this.mnemonic = directive;
         this.directive = true;
     }

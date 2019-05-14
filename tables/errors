@@ -13,3 +13,5 @@
 **** end label must be the same as start label
 *** missing operand field
 **** illegal label
+**** can't be indexed instruction
+**** unspecified source register

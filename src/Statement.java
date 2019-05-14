@@ -4,10 +4,13 @@ class Statement {
 
     private Error error;
     private String label;
-    private OpCode opCode;
+    private Mnemonic mnemonic;
     private int address;
-    private String firstOperand;
-    private String secondOperand;
+    private Operand firstOperand;
+    private Operand secondOperand;
+    boolean type4 = false;
+
+    private boolean indexed = false;
 
     private String line;
 
@@ -19,7 +22,7 @@ class Statement {
         String[] tokens;
         if (!isComment()) {
             tokens = line.split("\\s+|,");
-            boolean type4 = false;
+
             String[] opCodeTokens = tokens[0].split("[()]");
             if (opCodeTokens[0].equals("+")) {
                 type4 = true;
@@ -36,14 +39,14 @@ class Statement {
             boolean foundOp = false;
             for (int i = 0; i < Tables.getOperationTable().size(); i++) {
                 if (tokens[0].equalsIgnoreCase(Tables.getOperationTable().get(i).getMnemonic())) {
-                    opCode = Tables.getOperationTable().get(i);
+                    mnemonic = Tables.getOperationTable().get(i);
 
                     foundOp = true;
                     if (tokens.length > 1) {
-                        firstOperand = tokens[1];
+                        firstOperand = new Operand(tokens[1]);
                     }
                     if (tokens.length > 2) {
-                        secondOperand = tokens[2];
+                        secondOperand = new Operand(tokens[2]);
                     }
                     break;
                 }
@@ -56,16 +59,16 @@ class Statement {
 
             for (int i = 0; i < Tables.getOperationTable().size(); i++) {
                 if (tokens[1].equalsIgnoreCase(Tables.getOperationTable().get(i).getMnemonic())) {
-                    opCode = Tables.getOperationTable().get(i);
+                    mnemonic = Tables.getOperationTable().get(i);
                     if (foundOp) {
                         badLabel = true;
                     }
                     foundOp = true;
                     if (tokens.length > 2) {
-                        firstOperand = tokens[2];
+                        firstOperand = new Operand(tokens[2]);
                     }
                     if (tokens.length > 3) {
-                        secondOperand = tokens[3];
+                        secondOperand = new Operand(tokens[3]);
                     }
                     break;
                 }
@@ -79,10 +82,43 @@ class Statement {
             }
 
             if (foundOp) {
-                if (type4 && opCode.getSize() != 3 ) {
+                if (type4 && mnemonic.getSize() != 3 ) {
                     error = Tables.getErrorsTable().get(7);
                 }
             }
+
+            if (mnemonic.isRegisterType()) {
+                if (hasFirstOperand()) {
+                    if (!isRegister(firstOperand.getLine())) {
+                        error = Tables.getErrorsTable().get(8);
+                    }
+                }
+
+                if (hasSecondOperand()) {
+                    if (!isRegister(secondOperand.getLine())) {
+                        error = Tables.getErrorsTable().get(8);
+                    }
+                }
+
+                if (mnemonic.isTwoOperands() && !hasSecondOperand()) {
+                    error = Tables.getErrorsTable().get(16);
+                }
+            }
+
+            if (!mnemonic.isRegisterType() && !mnemonic.isDirective()) {
+                if (hasSecondOperand()) {
+                    if (secondOperand.getLine().equalsIgnoreCase("x")) {
+                        indexed = true;
+                    }
+                }
+            }
+
+            if (hasFirstOperand()) {
+                if (indexed && (mnemonic.isDirective() || firstOperand.isImmediate() || firstOperand.isIndirect())) {
+                    error = Tables.getErrorsTable().get(15);
+                }
+            }
+
 
 
         }
@@ -101,7 +137,6 @@ class Statement {
         return secondOperand != null;
     }
 
-
     boolean isComment() {
         return line.startsWith(COMMENT_INDICATOR);
     }
@@ -118,8 +153,8 @@ class Statement {
         return label;
     }
 
-    OpCode getOpCode() {
-        return opCode;
+    Mnemonic getMnemonic() {
+        return mnemonic;
     }
 
     int getAddress() {
@@ -130,11 +165,11 @@ class Statement {
         this.address = address;
     }
 
-    String getFirstOperand() {
+    Operand getFirstOperand() {
         return firstOperand;
     }
 
-    String getSecondOperand() {
+    Operand getSecondOperand() {
         return secondOperand;
     }
 
@@ -142,8 +177,16 @@ class Statement {
         return line;
     }
 
+    public boolean isType4() {
+        return type4;
+    }
+
+    public boolean isIndexed() {
+        return indexed;
+    }
+
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    boolean isRegister(String register) {
+    private boolean isRegister(String register) {
         switch (register) {
             case "a":
             case "A":

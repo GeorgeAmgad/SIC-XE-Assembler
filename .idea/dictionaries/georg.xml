@@ -2,9 +2,12 @@
   <dictionary name="georg">
     <words>
       <w>addr</w>
+      <w>compr</w>
+      <w>ldch</w>
       <w>locctr</w>
       <w>prog</w>
       <w>spliter</w>
+      <w>stch</w>
       <w>symtable</w>
     </words>
   </dictionary>

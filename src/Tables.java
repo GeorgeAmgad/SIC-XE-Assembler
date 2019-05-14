@@ -14,7 +14,7 @@ class Tables {
     private static final String DIRECT_PATH = "tables/directives.txt";
 
     private static final HashMap<String, Integer> SYMTABLE;
-    private static final List<OpCode> OPTABLE;
+    private static final List<Mnemonic> OPTABLE;
     private static final List<Error> ERRORS_TABLE;
 
     static {
@@ -32,7 +32,7 @@ class Tables {
             String line;
 
             while ((line = opTable.readLine()) != null) {
-                OPTABLE.add(new OpCode(line));
+                OPTABLE.add(new Mnemonic(line));
             }
         } catch (IOException ignored) {
         }
@@ -48,7 +48,7 @@ class Tables {
         return SYMTABLE;
     }
 
-    static List<OpCode> getOperationTable() {
+    static List<Mnemonic> getOperationTable() {
         return OPTABLE;
     }
 
@@ -80,7 +80,7 @@ class Tables {
                 } else {
                     size = 3;
                 }
-                OPTABLE.add(new OpCode(lineTokens[0], regType, size, lineTokens[3], twoOperands));
+                OPTABLE.add(new Mnemonic(lineTokens[0], regType, size, lineTokens[3], twoOperands));
             }
         } catch (IOException ignored) {
         }
