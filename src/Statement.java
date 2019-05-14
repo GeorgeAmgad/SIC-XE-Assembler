@@ -75,16 +75,15 @@ class Statement {
             }
             if (!foundOp) {
                 error = Tables.getErrorsTable().get(4);
+                return;
             }
 
             if (badLabel) {
                 error = Tables.getErrorsTable().get(14);
             }
 
-            if (foundOp) {
-                if (type4 && mnemonic.getSize() != 3 ) {
-                    error = Tables.getErrorsTable().get(7);
-                }
+            if (type4 && mnemonic.getSize() != 3 ) {
+                error = Tables.getErrorsTable().get(7);
             }
 
             if (mnemonic.isRegisterType()) {

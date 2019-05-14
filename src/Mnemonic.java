@@ -1,4 +1,4 @@
-public class Mnemonic {
+class Mnemonic {
 
     private String mnemonic;
     private boolean registerType;
@@ -8,7 +8,7 @@ public class Mnemonic {
     private int size;
     private String opcode;
 
-    public Mnemonic(String mnemonic, boolean registerType, int size, String opcode, boolean twoOperands) {
+    Mnemonic(String mnemonic, boolean registerType, int size, String opcode, boolean twoOperands) {
         this.mnemonic = mnemonic;
         this.registerType = registerType;
         this.size = size;
@@ -16,53 +16,32 @@ public class Mnemonic {
         this.twoOperands = twoOperands;
     }
 
-    public Mnemonic(String directive) {
+    Mnemonic(String directive) {
         this.mnemonic = directive;
         this.directive = true;
     }
 
-    public String getMnemonic() {
+    String getMnemonic() {
         return mnemonic;
     }
 
-    public void setMnemonic(String mnemonic) {
-        this.mnemonic = mnemonic;
-    }
-
-    public boolean isRegisterType() {
+    boolean isRegisterType() {
         return registerType;
     }
 
-    public void setRegisterType(boolean registerType) {
-        this.registerType = registerType;
-    }
-
-    public int getSize() {
+    int getSize() {
         return size;
     }
 
-    public void setSize(int size) {
-        this.size = size;
-    }
-
-    public String getOpcode() {
-        return opcode;
-    }
-
-    public void setOpcode(String opcode) {
-        this.opcode = opcode;
-    }
-
-    public boolean isTwoOperands() {
+    boolean isTwoOperands() {
         return twoOperands;
     }
 
-    public void setTwoOperands(boolean twoOperands) {
-        this.twoOperands = twoOperands;
-    }
-
-    public boolean isDirective() {
+    boolean isDirective() {
         return directive;
     }
 
+     String getOpcode() {
+        return opcode;
+    }
 }
