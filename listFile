@@ -1,32 +1,12 @@
 .234567890123456789
-001000	SEARCH    START   1000
-001000	        LDA       #0
-	*** undefined symbol in operand
-001003	         LDX      #ap740
-001006	LOOP     LDA     #STR
-	*** unrecognized operation code
-000000	         ADR     X,O
-	**** illegal label
-000000	STX       STA     TEMP
-001009	         LDA     #0ABC5
-00100C	          LDCH    @TEMP
-00100F	         COMP    CHAR
-	*** undefined symbol in operand
-001012	          JEQ     FOUN
-001015	         TIX     LEN
-001018	         JEQ     NOTF
-00101B	         J        LOOP
-00101E	FOUND    LDA     TEMP
-001021	         J       LOOP
-001024	NOTF     LDA     XX
-001027	TEMP     RESW    1
-00102A	STR      BYTE    C'FFREWQRFG'
-	*** not a hexadecimal string
-001033	STW      BYTE    X'FFREWQRFG'
-001038	XX       RESW    1
-00103B	LEN      WORD    9
-00103E	CHAR     WORD    65
-001041	         END     SEARCH
+001000	STAW      START   1000
+001000	STAB      RESB    1100
+00144C	          ORG     STAB
+001000	SYMBOL    RESB     6
+001006	VALUE     RESW     1
+001009	FLAGS    RESB     2
+00100B	      ORG      STAB+1100
+00144C	         END     STAW
 
 
 -----------------------------------------------
@@ -35,13 +15,8 @@
 
 			Name			Value
 		   -----------------------
-			STR				00102A
-			XX				001038
-			TEMP			001027
-			LEN				00103B
-			SEARCH			001000
-			LOOP			001006
-			NOTF			001024
-			STW				001033
-			CHAR			00103E
-			FOUND			00101E
+			STAW			001000
+			STAB			001000
+			SYMBOL			001000
+			FLAGS			001009
+			VALUE			001006

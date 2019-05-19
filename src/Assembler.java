@@ -1,11 +1,15 @@
 import java.io.*;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+
 class Assembler {
     private static final HashMap<String, Integer> SYMTABLE;
+    private static final HashMap<String, Integer> REGTABLE;
     private static final List<Error> ERRORS;
+
 
     private final File source;
     private final File listFile;
@@ -23,6 +27,7 @@ class Assembler {
 
     static {
         SYMTABLE = Tables.getSymbolTable();
+        REGTABLE = Tables.getREGTABLE();
         ERRORS = Tables.getErrorsTable();
     }
 
@@ -63,7 +68,7 @@ class Assembler {
                 continue;
             }
 
-            if (statement.getMnemonic().getMnemonic().equalsIgnoreCase("START") && !started) {
+            if (statement.getMnemonic().getString().equalsIgnoreCase("START") && !started) {
                 // Save #[OPERAND] as starting address, and #[LABEL] as program name.
                 // parseInt converts a string of base radix (16) to an integer
                 progStartAddr = Integer.parseInt(statement.getFirstOperand().getLine(), 16);
@@ -87,7 +92,7 @@ class Assembler {
 
             int growthSize = 0;
 
-            if (statement.getMnemonic().getMnemonic().equalsIgnoreCase("END") && !ended) {
+            if (statement.getMnemonic().getString().equalsIgnoreCase("END") && !ended) {
                 statement.setAddress(locctr);
                 if (statement.hasFirstOperand()) {
                     if (!statement.getFirstOperand().getLine().equalsIgnoreCase(progName)) {
@@ -102,19 +107,22 @@ class Assembler {
 
             if (statement.hasLabel()) {
                 // Search SYMTABLE for LABEL.
-                if (SYMTABLE.containsKey(statement.getLabel())) {
+                if (SYMTABLE.containsKey(statement.getLabel()) || statement.getLabel().contains("[+\\-*/]")) {
                     statement.setError(ERRORS.get(0));
                 } else {
-                    // Insert (LABEL, LOCCTR) into SYMTAB.
+                    // Insert (LABEL, LOCCTR) into SYMTABLE.
                     SYMTABLE.put(statement.getLabel(), locctr);
                 }
             }
-
+            boolean locctrChanged = false;
             if (statement.getMnemonic().isDirective()) {
+                int expression;
 
-                switch (statement.getMnemonic().getMnemonic()) {
+                String[] operand;
+                switch (statement.getMnemonic().getString()) {
                     case "WORD":
                         growthSize = 3;
+                        statement.setInstruction(String.format("%06X", Integer.parseInt(statement.getFirstOperand().getLine())));
                         break;
 
                     case "RESW":
@@ -122,27 +130,36 @@ class Assembler {
                         break;
 
                     case "RESB":
-                    case "ORG":
                         growthSize = Integer.parseInt(statement.getFirstOperand().getLine());
                         break;
 
                     case "BYTE":
                         // Find length of constant in bytes.
                         // Add length to LOCCTR.
-                        String[] operand = statement.getFirstOperand().getLine().split("'");
+                        operand = statement.getFirstOperand().getLine().split("'");
                         String dataType = operand[0];
                         int length = operand[1].length();
 
                         switch (dataType) {
                             case "c":
                             case "C":
+                                String s = operand[1];
+                                StringBuilder sb = new StringBuilder();
+
+                                for (char c : s.toCharArray())
+                                    sb.append(Integer.toHexString((int) c));
+
+                                BigInteger mInt = new BigInteger(sb.toString());
+                                statement.setInstruction(mInt.toString());
                                 growthSize = length;
                                 break;
                             case "x":
                             case "X":
                                 if (length % 2 != 0) {
                                     length++;
+                                    statement.setError(ERRORS.get(20));
                                 }
+                                statement.setInstruction(operand[1]);
                                 growthSize = length / 2;
                                 break;
                             default:
@@ -155,13 +172,45 @@ class Assembler {
                             }
                         }
                         break;
+
+                    case "ORG":
+                        if (statement.hasLabel()) {
+                            statement.setError(ERRORS.get(18));
+                            break;
+                        }
+                        expression = evaluateExpression(statement);
+                        if (expression != -1) {
+                            statement.setAddress(locctr);
+                            statements.add(statement);
+                            locctr = expression;
+                            locctrChanged = true;
+                            break;
+
+                        } else {
+                            statement.setError(ERRORS.get(5));
+                            break;
+                        }
+                    case "EQU":
+                        expression = evaluateExpression(statement);
+                        if (expression != -1) {
+                            if (!statement.hasLabel()) {
+                                statement.setError(ERRORS.get(17));
+                                break;
+                            }
+                            SYMTABLE.replace(statement.getLabel(), expression);
+                        }
+                        break;
                     default:
                         // Set error flag (invalid operation code).
                         statement.setError(ERRORS.get(4));
                 }
-                statement.setAddress(locctr);
-                statements.add(statement);
-                locctr += growthSize;
+
+                // could be changed by ORG
+                if (!locctrChanged) {
+                    statement.setAddress(locctr);
+                    statements.add(statement);
+                    locctr += growthSize;
+                }
                 continue;
             }
 
@@ -173,58 +222,42 @@ class Assembler {
 
         }
 
-        // UNDEFINED label error handler
-//        for (Statement statement : statements) {
-//            if (!statement.isComment() && statement.getMnemonic() != null) {
-//                if (!statement.getMnemonic().isRegisterType() && !statement.getMnemonic().isDirective() && statement.hasFirstOperand()) {
-//                    if (!statement.getFirstOperand().getLine().startsWith("0") && !statement.getFirstOperand().isImmediate()
-//                    && !statement.getFirstOperand().isIndirect()) {
-//                        if (!SYMTABLE.containsKey(statement.getFirstOperand().getLine())) {
-//                            statement.setError(ERRORS.get(5));
-//                        }
-//                    }
-//                }
-//            }
-//        }
-
-
-
+        // symtable and hex numbers errors handling
         for (Statement statement : statements) {
             if (!statement.isComment() && statement.getMnemonic() != null) {
                 if (!statement.getMnemonic().isRegisterType() && !statement.getMnemonic().isDirective() &&
                         statement.hasFirstOperand()) {
-                    if (statement.getFirstOperand().isIndirect() || statement.getFirstOperand().isImmediate()) {
+                    if (statement.getFirstOperand().isIndirect()) {
                         boolean isLabel = false;
                         if (SYMTABLE.containsKey(statement.getFirstOperand().getFilteredLine())) {
                             isLabel = true;
                         }
                         if (!isLabel && !isHex(statement.getFirstOperand().getFilteredLine())) {
+                            statement.setError(ERRORS.get(6));
+                        }
+                        statement.getFirstOperand().setSymAddress(isLabel);
+                    }
+
+                    if (statement.getFirstOperand().isImmediate()) {
+                        boolean isLabel = false;
+                        if (SYMTABLE.containsKey(statement.getFirstOperand().getFilteredLine())) {
+                            isLabel = true;
+                        }
+                        if (!isLabel && !isValidNum(statement.getFirstOperand().getFilteredLine())) {
                             statement.setError(ERRORS.get(5));
                         }
+                        statement.getFirstOperand().setSymAddress(isLabel);
                     }
 
                     if (statement.getFirstOperand().isSimple()) {
-                        if (!SYMTABLE.containsKey(statement.getFirstOperand().getLine())) {
+                        if (!SYMTABLE.containsKey(statement.getFirstOperand().getFilteredLine())) {
                             statement.setError(ERRORS.get(5));
                         }
-                    }
-
-                    if (statement.hasSecondOperand()) {
-                        if (statement.getSecondOperand().isIndirect() || statement.getSecondOperand().isImmediate()) {
-                            boolean isLabel = false;
-                            if (SYMTABLE.containsKey(statement.getSecondOperand().getFilteredLine())) {
-                                isLabel = true;
-                            }
-                            if (!isLabel && !isHex(statement.getSecondOperand().getFilteredLine())) {
-                                statement.setError(ERRORS.get(5));
-                            }
-                        }
-
+                        statement.getFirstOperand().setSymAddress(true);
                     }
                 }
             }
         }
-
 
 
         // printer
@@ -255,7 +288,7 @@ class Assembler {
         list.close();
     }
 
-    private  void secondPass() throws IOException {
+    private void secondPass() throws IOException {
 
         BufferedWriter object = new BufferedWriter(new FileWriter(objectFile));
 
@@ -268,16 +301,147 @@ class Assembler {
             }
         }
 
+
+        // Remove comments
+        statements.removeIf(Statement::isComment);
+        statements.removeIf(statement -> statement.getMnemonic().isDirective() && statement.getInstruction() == null);
+
+        boolean baseRelative = false;
+
+        for (Statement statement : statements) {
+            StringBuilder instruction = new StringBuilder();
+
+            if (statement.getInstruction() != null) {
+                continue;
+            }
+
+            // for register type instructions
+            if (statement.getMnemonic().getSize() == 2 && statement.getMnemonic().isRegisterType()) {
+                instruction.append(statement.getMnemonic().getOpcode());
+                instruction.append(REGTABLE.get(statement.getFirstOperand().getLine()));
+                if (statement.getMnemonic().isTwoOperands()) {
+                    instruction.append(REGTABLE.get(statement.getSecondOperand().getLine()));
+                } else {
+                    instruction.append(0);
+                }
+                statement.setInstruction(instruction.toString());
+                continue;
+            }
+
+            if (statement.getMnemonic().getSize() != 2) {
+
+                int ni;
+                if (statement.getFirstOperand().isIndirect()) {
+                    ni = 2;
+                } else if (statement.getFirstOperand().isImmediate()) {
+                    ni = 1;
+                } else {
+                    assert statement.getFirstOperand().isSimple();
+                    ni = 3;
+                }
+
+                // append the first char only of the opcode
+                instruction.append(statement.getMnemonic().getOpcode().charAt(0));
+
+                // add n and i to second half of the first byte
+                int secondHalf = Integer.parseInt(String.valueOf(statement.getMnemonic().getOpcode().charAt(1)), 16);
+                secondHalf += ni;
+
+                instruction.append(String.format("%01X", secondHalf));
+
+                // builder for the flags byte
+                StringBuilder secondByte = new StringBuilder();
+
+                // append indexed flag
+                secondByte.append(statement.isIndexed() ? 1 : 0);
+
+                // append base relative flag
+                //noinspection ConstantConditions
+                secondByte.append(baseRelative ? 1 : 0);
+
+                // append pc relative flag
+                secondByte.append(statement.getFirstOperand().isSymAddress() && !statement.isType4() ? 1 : 0);
+
+                // append format 4 flag
+                secondByte.append(statement.isType4() ? 1 : 0);
+
+                // convert from binary to int
+                int secondByteValue = Integer.parseInt(secondByte.toString(), 2);
+                // convert from int to hex string then append to the instruction
+                instruction.append(String.format("%01X", secondByteValue));
+
+                int displacement;
+                if (statement.isType4()) {
+
+                    displacement = evaluateExpression(statement);
+                    instruction.append(String.format("%05X", displacement));
+                    statement.setInstruction(instruction.toString());
+                    continue;
+                }
+
+                if (statement.getFirstOperand().isSymAddress()) {
+                    int PC = statement.getAddress() + statement.getMnemonic().getSize();
+                    int TA = evaluateExpression(statement);
+                    displacement = TA - PC;
+                    if (displacement < 0) {
+                        String cutterDisp = String.format("%X", displacement);
+                        cutterDisp = cutterDisp.substring(5);
+                        assert cutterDisp.length() == 3;
+                        instruction.append(cutterDisp);
+                    } else {
+                        instruction.append(String.format("%03X", displacement));
+                    }
+                    statement.setInstruction(instruction.toString());
+
+                } else {
+                    displacement = evaluateExpression(statement);
+                    instruction.append(String.format("%03X", displacement));
+                    statement.setInstruction(instruction.toString());
+                }
+
+
+            }
+
+
+        }
+
         String headerRecord = "H";
         headerRecord += appendSpace(progName) + "^";
         headerRecord += String.format("%06X^", progStartAddr);
         headerRecord += String.format("%06X\n", progLength);
-
         object.write(headerRecord);
 
-        // Remove comments
-        statements.removeIf(Statement::isComment);
+        int size = 0;
+        StringBuilder record = new StringBuilder();
+        boolean instructionsExist = false;
+        for (Statement statement : statements) {
+            if (statement.getInstruction() != null) {
+                instructionsExist = true;
+                break;
+            }
+        }
 
+        if (instructionsExist) {
+            object.write("T");
+            object.write(String.format("%06X^", progStartAddr));
+            for (Statement statement : statements) {
+                if (size + (statement.getInstruction().length() / 2) <= 30 && !statement.getMnemonic().isDirective()) {
+                    record.append(statement.getInstruction());
+                    size += (statement.getInstruction().length() / 2);
+                } else {
+                    object.write(String.format("%02X^", size) + record.toString() + "\n");
+                    size = 0;
+                    record = new StringBuilder();
+                    object.write("T" + String.format("%06X^", statement.getAddress()));
+                    record.append(statement.getInstruction());
+                    size += (statement.getInstruction().length() / 2);
+                }
+            }
+            object.write(String.format("%02X^", size) + record.toString() + "\n");
+        }
+
+
+        object.write("E" + String.format("%06X", progStartAddr));
 
         object.close();
     }
@@ -293,5 +457,68 @@ class Assembler {
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean isHex(String s) {
         return s.matches("^[a-fA-F0-9]*$");
+    }
+
+    private int evaluateExpression(Statement statement) {
+        int result;
+
+        int firstOperand;
+        int secondOperand;
+
+        String[] tokens = statement.getFirstOperand().getFilteredLine2().split("[+\\-*/]");
+        if (SYMTABLE.containsKey(tokens[0])) {
+            firstOperand = SYMTABLE.get(tokens[0]);
+        } else if (isNum(tokens[0])) {
+            firstOperand = Integer.parseInt(tokens[0]);
+        } else {
+            statement.setError(ERRORS.get(5));
+            return -1;
+        }
+        if (tokens.length > 1) {
+
+            char op = statement.getFirstOperand().getFilteredLine2().charAt(tokens[0].length());
+
+            if (SYMTABLE.containsKey(tokens[1])) {
+                secondOperand = SYMTABLE.get(tokens[1]);
+            } else if (isNum(tokens[1])) {
+                secondOperand = Integer.parseInt(tokens[1]);
+            } else {
+                statement.setError(ERRORS.get(5));
+                return -1;
+            }
+
+            switch (op) {
+                case '+':
+                    result = firstOperand + secondOperand;
+                    break;
+
+                case '-':
+                    result = firstOperand - secondOperand;
+                    break;
+
+                case '*':
+                    result = firstOperand * secondOperand;
+                    break;
+
+                case '/':
+                    result = firstOperand / secondOperand;
+                    break;
+
+                default:
+                    statement.setError(ERRORS.get(5));
+                    return -1;
+            }
+        } else {
+            result = firstOperand;
+        }
+        return result;
+    }
+
+    private boolean isValidNum(String s) {
+        return s.matches("^[0-9]*$") && Integer.parseInt(s) < 4095;
+    }
+
+    private boolean isNum(String s) {
+        return s.matches("^[0-9]*$");
     }
 }

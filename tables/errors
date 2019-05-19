@@ -15,3 +15,7 @@
 **** illegal label
 **** can't be indexed instruction
 **** unspecified source register
+**** this statement requires a label
+**** this statement cannot have a label
+**** cannot evaluate expression
+**** odd length of hex string

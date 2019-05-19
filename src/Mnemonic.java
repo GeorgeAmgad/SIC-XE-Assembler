@@ -1,6 +1,6 @@
 class Mnemonic {
 
-    private String mnemonic;
+    private String string;
     private boolean registerType;
     private boolean twoOperands;
     private boolean directive = false;
@@ -8,8 +8,8 @@ class Mnemonic {
     private int size;
     private String opcode;
 
-    Mnemonic(String mnemonic, boolean registerType, int size, String opcode, boolean twoOperands) {
-        this.mnemonic = mnemonic;
+    Mnemonic(String string, boolean registerType, int size, String opcode, boolean twoOperands) {
+        this.string = string;
         this.registerType = registerType;
         this.size = size;
         this.opcode = opcode;
@@ -17,12 +17,12 @@ class Mnemonic {
     }
 
     Mnemonic(String directive) {
-        this.mnemonic = directive;
+        this.string = directive;
         this.directive = true;
     }
 
-    String getMnemonic() {
-        return mnemonic;
+    String getString() {
+        return string;
     }
 
     boolean isRegisterType() {
@@ -31,6 +31,10 @@ class Mnemonic {
 
     int getSize() {
         return size;
+    }
+
+    void setSize(int size) {
+        this.size = size;
     }
 
     boolean isTwoOperands() {

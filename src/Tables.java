@@ -14,16 +14,29 @@ class Tables {
     private static final String DIRECT_PATH = "tables/directives.txt";
 
     private static final HashMap<String, Integer> SYMTABLE;
+    private static final HashMap<String, Integer> REGTABLE;
     private static final List<Mnemonic> OPTABLE;
     private static final List<Error> ERRORS_TABLE;
 
     static {
         SYMTABLE = new HashMap<>();
+        REGTABLE = new HashMap<>();
         OPTABLE = new ArrayList<>();
         ERRORS_TABLE = new ArrayList<>();
         setDirectivesTable(new File(DIRECT_PATH));
         setOperationTable(new File(OPTABLE_PATH));
         setErrorsTable(new File(ERRORS_PATH));
+
+        REGTABLE.put("A", 0);
+        REGTABLE.put("X", 1);
+        REGTABLE.put("L", 2);
+        REGTABLE.put("B", 3);
+        REGTABLE.put("S", 4);
+        REGTABLE.put("T", 5);
+        REGTABLE.put("F", 6);
+
+        REGTABLE.put("PC", 8);
+        REGTABLE.put("SW", 9);
     }
 
     private static void setDirectivesTable(File file) {
@@ -46,6 +59,10 @@ class Tables {
 
     static HashMap<String, Integer> getSymbolTable() {
         return SYMTABLE;
+    }
+
+    static HashMap<String, Integer> getREGTABLE() {
+        return REGTABLE;
     }
 
     static List<Mnemonic> getOperationTable() {

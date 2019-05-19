@@ -3,9 +3,11 @@
     <words>
       <w>addr</w>
       <w>compr</w>
+      <w>disp</w>
       <w>ldch</w>
       <w>locctr</w>
       <w>prog</w>
+      <w>regtable</w>
       <w>spliter</w>
       <w>stch</w>
       <w>symtable</w>

@@ -1,6 +1,19 @@
+
+@SuppressWarnings("unused")
 class Statement {
 
     private static final String COMMENT_INDICATOR = ".";
+
+    public static final int A = 0;
+    public static final int X = 1;
+    public static final int L = 2;
+    public static final int B = 3;
+    public static final int S = 4;
+    public static final int T = 5;
+    public static final int F = 6;
+
+    public static final int PC = 8;
+    public static final int SW = 9;
 
     private Error error;
     private String label;
@@ -8,7 +21,10 @@ class Statement {
     private int address;
     private Operand firstOperand;
     private Operand secondOperand;
-    boolean type4 = false;
+
+    private String instruction;
+
+    private boolean type4 = false;
 
     private boolean indexed = false;
 
@@ -23,22 +39,21 @@ class Statement {
         if (!isComment()) {
             tokens = line.split("\\s+|,");
 
-            String[] opCodeTokens = tokens[0].split("[()]");
-            if (opCodeTokens[0].equals("+")) {
+            if (tokens[0].startsWith("+")) {
                 type4 = true;
-                tokens[0] = opCodeTokens[1];
+                tokens[0] = tokens[0].substring(1);
             }
             if (tokens.length > 1) {
-                opCodeTokens = tokens[1].split("[()]");
-                if (opCodeTokens[0].equals("+")) {
+                if (tokens[1].startsWith("+")) {
                     type4 = true;
-                    tokens[1] = opCodeTokens[1];
+                    tokens[1] = tokens[1].substring(1);
+
                 }
             }
 
             boolean foundOp = false;
             for (int i = 0; i < Tables.getOperationTable().size(); i++) {
-                if (tokens[0].equalsIgnoreCase(Tables.getOperationTable().get(i).getMnemonic())) {
+                if (tokens[0].equalsIgnoreCase(Tables.getOperationTable().get(i).getString())) {
                     mnemonic = Tables.getOperationTable().get(i);
 
                     foundOp = true;
@@ -58,7 +73,7 @@ class Statement {
             boolean badLabel = false;
 
             for (int i = 0; i < Tables.getOperationTable().size(); i++) {
-                if (tokens[1].equalsIgnoreCase(Tables.getOperationTable().get(i).getMnemonic())) {
+                if (tokens[1].equalsIgnoreCase(Tables.getOperationTable().get(i).getString())) {
                     mnemonic = Tables.getOperationTable().get(i);
                     if (foundOp) {
                         badLabel = true;
@@ -73,6 +88,7 @@ class Statement {
                     break;
                 }
             }
+
             if (!foundOp) {
                 error = Tables.getErrorsTable().get(4);
                 return;
@@ -82,7 +98,7 @@ class Statement {
                 error = Tables.getErrorsTable().get(14);
             }
 
-            if (type4 && mnemonic.getSize() != 3 ) {
+            if (type4 && mnemonic.getSize() != 3) {
                 error = Tables.getErrorsTable().get(7);
             }
 
@@ -118,9 +134,13 @@ class Statement {
                 }
             }
 
-
+            if (type4) {
+                mnemonic.setSize(4);
+            }
 
         }
+
+
 
     }
 
@@ -132,7 +152,7 @@ class Statement {
         return firstOperand != null;
     }
 
-    boolean hasSecondOperand() {
+    private boolean hasSecondOperand() {
         return secondOperand != null;
     }
 
@@ -176,12 +196,20 @@ class Statement {
         return line;
     }
 
-    public boolean isType4() {
+    boolean isType4() {
         return type4;
     }
 
-    public boolean isIndexed() {
+    boolean isIndexed() {
         return indexed;
+    }
+
+    String getInstruction() {
+        return instruction;
+    }
+
+    void setInstruction(String instruction) {
+        this.instruction = instruction;
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
@@ -203,6 +231,8 @@ class Statement {
             case "L":
             case "pc":
             case "PC":
+            case "SW":
+            case "sw":
                 return true;
             default:
                 return false;
