@@ -1,12 +1,27 @@
 .234567890123456789
-001000	STAW      START   1000
-001000	STAB      RESB    1100
-00144C	          ORG     STAB
-001000	SYMBOL    RESB     6
-001006	VALUE     RESW     1
-001009	FLAGS    RESB     2
-00100B	      ORG      STAB+1100
-00144C	         END     STAW
+001000	SEARCH    START   1000
+001000	       LDA     #0
+001003	         LDX     #0
+001006	LOOP     LDA     #STR
+001009	         ADDR    X,A
+00100B	         +STA    TEMP
+00100F	         LDA     #345
+001012	         LDCH    @TEMP
+001015	         COMP    CHAR
+001018	         JEQ     FOUND+2
+00101B	         +TIX    LEN
+00101F	         JEQ     NOTF
+001022	         J       LOOP
+001025	FOUND    LDA     TEMP
+001028	         J       LOOP
+00102B	NOTF     LDA     XX
+00102E	TEMP     RESW    1
+001031	STR      BYTE    C'FFREWQRFG'
+00103A	STRA     BYTE    X'123AB6F8'
+00103E	XX       RESW    3
+001047	LEN      WORD    9
+00104A	CHAR     WORD    65
+00104D	         END     SEARCH
 
 
 -----------------------------------------------
@@ -15,8 +30,13 @@
 
 			Name			Value
 		   -----------------------
-			STAW			001000
-			STAB			001000
-			SYMBOL			001000
-			FLAGS			001009
-			VALUE			001006
+			STR				001031
+			XX				00103E
+			TEMP			00102E
+			LEN				001047
+			SEARCH			001000
+			LOOP			001006
+			NOTF			00102B
+			STRA			00103A
+			CHAR			00104A
+			FOUND			001025
