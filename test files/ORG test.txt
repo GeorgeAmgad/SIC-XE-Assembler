@@ -1,0 +1,9 @@
+.234567890123456789
+STAW     START   1000
+STAB     RESB    1100
+         ORG     STAB+2
+SYMBOL   RESB    6
+VALUE    RESW    1
+FLAGS    RESB    2
+         ORG     STAB+1100
+         END     STAB

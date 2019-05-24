@@ -1,0 +1,5 @@
+.234567890123456789
+         START   1000
+SEARCH   LDX     #0
+         TIXR    S
+         END     SEARCH

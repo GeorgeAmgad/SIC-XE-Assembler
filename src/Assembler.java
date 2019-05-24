@@ -10,7 +10,6 @@ class Assembler {
     private static final HashMap<String, Integer> REGTABLE;
     private static final List<Error> ERRORS;
 
-
     private final File source;
     private final File listFile;
     private final File objectFile;

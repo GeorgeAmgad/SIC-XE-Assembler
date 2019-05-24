@@ -1,0 +1,7 @@
+.234567890123456789
+         START   1000
+STAB     RESB    1100
+SYMBOL   EQU     STAB
+VALUE    EQU     STAB+6
+FLAGS    EQU     STAB+9
+         END     STAB
