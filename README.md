@@ -14,7 +14,7 @@
 	
 3. The parser handles all storage directives (BYTE, WORD, RESW, and RESB).
 4. The parser handles EQU and ORG statements.
-5. Simple expression evaluation. (A <op> B) operand arithmetic, where <op> is one of +, -, *, / and no spaces surround the operation, e.g. A+B.
+5. Simple expression evaluation. (A op B) operand arithmetic, where op is one of +, -, *, / and no spaces surround the operation, e.g. A+B.
 6. The output of this assembler contain:
 
 	a) The symbol table.
