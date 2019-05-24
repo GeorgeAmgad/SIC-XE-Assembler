@@ -1,6 +1,6 @@
 # SIC-XE-Assembler
 
-1. A parser that is capable of handling source lines that are instructions, storage declaration, comments, and assembler directives.
+1. A free-form parser that is capable of handling source lines that are instructions, storage declaration, comments, and assembler directives.
 2. For instructions, the parser is capable of decoding 2, 3 and 4-byte instructions as follows:
 
 	a) 2-byte with 1 or 2 symbolic register reference (e.g., TIXR A, ADDR S, A).
@@ -25,4 +25,4 @@
 	
 	d) Object-code file whose format is the same as the one described in the textbook in section 2.1.1 and 2.3.5.
 	
-	
+		*** see the reports for better overview 	
